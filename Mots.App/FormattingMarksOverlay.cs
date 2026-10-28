@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace Mots;
 
@@ -19,10 +20,12 @@ public sealed class FormattingMarksOverlay : FrameworkElement
 
     private readonly Dictionary<(string Glyph, double Size), FormattedText> _glyphs = [];
     private RichTextBox? _target;
+    private bool _redrawPending;
 
     public FormattingMarksOverlay()
     {
         IsHitTestVisible = false;
+        IsVisibleChanged += (_, _) => Refresh();
     }
 
     public RichTextBox? Target
@@ -32,14 +35,14 @@ public sealed class FormattingMarksOverlay : FrameworkElement
         {
             if (_target is not null)
             {
-                _target.RemoveHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler(OnTargetChanged));
+                _target.RemoveHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler(OnTargetScrolled));
                 _target.TextChanged -= OnTargetChanged;
                 _target.SizeChanged -= OnTargetChanged;
             }
             _target = value;
             if (_target is not null)
             {
-                _target.AddHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler(OnTargetChanged));
+                _target.AddHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler(OnTargetScrolled));
                 _target.TextChanged += OnTargetChanged;
                 _target.SizeChanged += OnTargetChanged;
             }
@@ -53,10 +56,29 @@ public sealed class FormattingMarksOverlay : FrameworkElement
         return brush;
     }
 
-    private void OnTargetChanged(object sender, EventArgs e)
+    private void OnTargetScrolled(object sender, EventArgs e)
     {
         if (IsVisible)
             InvalidateVisual();
+    }
+
+    /// <summary>
+    /// Au moment de l'événement, l'éditeur n'a pas encore remis en page son texte : les positions seraient fausses
+    /// ou introuvables et les marques disparaîtraient. On redessine une fois la mise en page terminée.
+    /// </summary>
+    private void OnTargetChanged(object sender, EventArgs e) => Refresh();
+
+    /// <summary>Demande un redessin différé (à appeler aussi quand le document de l'éditeur est remplacé).</summary>
+    public void Refresh()
+    {
+        if (!IsVisible || _redrawPending) return;
+        _redrawPending = true;
+        Dispatcher.BeginInvoke(DispatcherPriority.Background, () =>
+        {
+            _redrawPending = false;
+            if (IsVisible)
+                InvalidateVisual();
+        });
     }
 
     protected override void OnRender(DrawingContext dc)

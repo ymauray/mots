@@ -35,6 +35,7 @@ public partial class MainWindow
     {
         _outline = []; // les éléments du plan désignent des paragraphes de l'ancien document
         Editor.Document = document;
+        MarksOverlay.Refresh();
         RefreshOutline();
     }
 

@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using NUnit.Framework;
 
 namespace Mots.Tests;
@@ -169,6 +170,46 @@ public class FormattingMarksTests : ShownWindowTestBase
 
         H.LoadParagraphs(Docs.P(StyleKind.Normal, "ab"));
         Assert.That(Glyphs().Count(g => g == "·"), Is.EqualTo(0));
+    }
+
+    /// <summary>Nombre de pixels non transparents réellement présents sur l'incrustation, après le cycle de rendu normal.</summary>
+    private int PaintedPixels()
+    {
+        Wpf.Pump();
+        var overlay = H.MarksOverlay;
+        var bitmap = new RenderTargetBitmap((int)overlay.ActualWidth, (int)overlay.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+        bitmap.Render(overlay);
+        var pixels = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];
+        bitmap.CopyPixels(pixels, bitmap.PixelWidth * 4, 0);
+        return Enumerable.Range(0, pixels.Length / 4).Count(i => pixels[i * 4 + 3] != 0);
+    }
+
+    [Test]
+    public void Marks_stay_visible_while_typing()
+    {
+        H.LoadParagraphs(Docs.P(StyleKind.Normal, "Bonjour ! dit-elle."));
+        H.MarksButton.IsChecked = true;
+        H.Window.UpdateLayout();
+        Assert.That(PaintedPixels(), Is.GreaterThan(0), "précondition : marques visibles avant la frappe");
+
+        H.PlaceCaretAtEnd(0);
+        H.Editor.CaretPosition.InsertTextInRun(" Lorem");
+
+        Assert.That(PaintedPixels(), Is.GreaterThan(0));
+    }
+
+    [Test]
+    public void Marks_include_the_new_text_after_typing()
+    {
+        H.LoadParagraphs(Docs.P(StyleKind.Normal, "a"));
+        H.MarksButton.IsChecked = true;
+        H.Window.UpdateLayout();
+        var before = PaintedPixels();
+
+        H.PlaceCaretAtEnd(0);
+        H.Editor.CaretPosition.InsertTextInRun(" b c d e f");
+
+        Assert.That(PaintedPixels(), Is.GreaterThan(before));
     }
 
     [Test]
