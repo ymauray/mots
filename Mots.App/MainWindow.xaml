@@ -203,7 +203,7 @@
                     <RichTextBox x:Name="Editor" AcceptsTab="True" VerticalScrollBarVisibility="Auto"
                                  Background="White" Foreground="Black" BorderThickness="0"
                                  Padding="56,48"
-                                 PreviewKeyDown="Editor_PreviewKeyDown"
+                                 PreviewKeyDown="Editor_PreviewKeyDown" PreviewTextInput="Editor_PreviewTextInput"
                                  SelectionChanged="Editor_SelectionChanged" TextChanged="Editor_TextChanged"
                                  SpellCheck.IsEnabled="True" Language="fr-FR"/>
                     <local:FormattingMarksOverlay x:Name="MarksOverlay" Visibility="Collapsed"/>
