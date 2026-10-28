@@ -33,6 +33,7 @@ public partial class MainWindow : Window
                 e.FormatToApply = DataFormats.UnicodeText;
         });
 
+        InitializeOutline();
         UpdateStyleBox();
         UpdateTitle();
         UpdateStatus();
@@ -66,7 +67,7 @@ public partial class MainWindow : Window
         if (!ConfirmDiscard()) return;
         var paragraph = new Paragraph();
         ParagraphStyles.Apply(paragraph, StyleKind.Normal);
-        Editor.Document = new FlowDocument(paragraph);
+        ReplaceDocument(new FlowDocument(paragraph));
         _currentPath = null;
         SetDirty(false);
     }
@@ -79,7 +80,7 @@ public partial class MainWindow : Window
 
         try
         {
-            Editor.Document = DocxConverter.Load(dlg.FileName);
+            ReplaceDocument(DocxConverter.Load(dlg.FileName));
             _currentPath = dlg.FileName;
             SetDirty(false);
         }
@@ -191,6 +192,7 @@ public partial class MainWindow : Window
         }
         SetDirty(true);
         UpdateStyleBox();
+        ScheduleOutlineRefresh();
         Editor.Focus();
     }
 
@@ -250,6 +252,7 @@ public partial class MainWindow : Window
         try
         {
             UpdateStyleBox();
+            UpdateOutlineSelection();
 
             BoldButton.IsChecked = Equals(Editor.Selection.GetPropertyValue(TextElement.FontWeightProperty), FontWeights.Bold);
             ItalicButton.IsChecked = Equals(Editor.Selection.GetPropertyValue(TextElement.FontStyleProperty), FontStyles.Italic);
@@ -267,6 +270,7 @@ public partial class MainWindow : Window
     {
         SetDirty(true);
         UpdateStatus();
+        ScheduleOutlineRefresh();
     }
 
     // ---------- Rechercher / Remplacer ----------

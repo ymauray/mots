@@ -117,6 +117,25 @@
             </StackPanel>
         </Border>
 
+        <!-- Plan : un élément par chapitre (style Titre 1) -->
+        <Border DockPanel.Dock="Left" Width="240" BorderThickness="0,0,1,0" BorderBrush="#22808080" Background="#0C808080">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="Plan" FontWeight="SemiBold" Margin="16,14,16,8"/>
+                <TextBlock x:Name="OutlineEmptyText" DockPanel.Dock="Top" Margin="16,4" TextWrapping="Wrap"
+                           FontSize="12" Opacity="0.6"
+                           Text="Aucun chapitre. Appliquez le style « Titre 1 » (Ctrl+1) à un titre pour l'ajouter au plan."/>
+                <ListBox x:Name="OutlineList" BorderThickness="0" Background="Transparent" Padding="4,0"
+                         PreviewMouseLeftButtonUp="OutlineList_PreviewMouseLeftButtonUp" KeyDown="OutlineList_KeyDown">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Title}" ToolTip="{Binding Title}" Padding="8,4"
+                                       TextTrimming="CharacterEllipsis"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
         <!-- Zone de travail : une « page » posée sur un fond neutre -->
         <Grid Background="#14808080">
             <Border HorizontalAlignment="Stretch" MaxWidth="820" Margin="24,20" Background="White"
