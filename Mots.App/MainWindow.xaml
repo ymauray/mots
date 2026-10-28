@@ -53,6 +53,8 @@
         <KeyBinding Key="OemPlus" Modifiers="Ctrl+Shift" Command="{x:Static local:ViewCommands.ZoomIn}"/>
         <KeyBinding Key="Subtract" Modifiers="Ctrl" Command="{x:Static local:ViewCommands.ZoomOut}"/>
         <KeyBinding Key="OemMinus" Modifiers="Ctrl" Command="{x:Static local:ViewCommands.ZoomOut}"/>
+        <KeyBinding Key="Space" Modifiers="Ctrl+Shift" Command="{x:Static local:TypographyCommands.NonBreakingSpace}"/>
+        <KeyBinding Key="Space" Modifiers="Ctrl+Alt+Shift" Command="{x:Static local:TypographyCommands.NarrowNonBreakingSpace}"/>
         <KeyBinding Key="D0" Modifiers="Ctrl" Command="{x:Static local:StyleCommands.Normal}"/>
         <KeyBinding Key="D1" Modifiers="Ctrl" Command="{x:Static local:StyleCommands.Heading1}"/>
     </Window.InputBindings>
@@ -68,6 +70,8 @@
         <CommandBinding Command="ApplicationCommands.SaveAs" Executed="SaveAs_Executed"/>
         <CommandBinding Command="ApplicationCommands.Print" Executed="Print_Executed"/>
         <CommandBinding Command="ApplicationCommands.Find" Executed="Find_Executed"/>
+        <CommandBinding Command="{x:Static local:TypographyCommands.NonBreakingSpace}" Executed="NonBreakingSpace_Executed"/>
+        <CommandBinding Command="{x:Static local:TypographyCommands.NarrowNonBreakingSpace}" Executed="NarrowNonBreakingSpace_Executed"/>
         <CommandBinding Command="{x:Static local:StyleCommands.Normal}" Executed="StyleNormal_Executed"/>
         <CommandBinding Command="{x:Static local:StyleCommands.Heading1}" Executed="StyleHeading1_Executed"/>
     </Window.CommandBindings>
