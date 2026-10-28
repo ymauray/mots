@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Mots — un traitement de textes pour écrire des romans</title>
+  <meta name="description" content="Mots est un petit traitement de textes pour Windows, piloté par les styles. Vous écrivez, il s'occupe de la mise en forme. Vos documents restent de vrais fichiers Word.">
+  <meta property="og:title" content="Mots — un traitement de textes pour écrire des romans">
+  <meta property="og:description" content="Un petit traitement de textes pour Windows, piloté par les styles. Vos documents restent de vrais fichiers Word.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ymauray.github.io/mots/">
+  <meta property="og:image" content="https://ymauray.github.io/mots/assets/capture-editeur.png">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap bar">
+      <a class="brand" href="#top" aria-label="Mots, accueil">
+        <img src="assets/icon.svg" alt="" width="32" height="32">
+        <span>Mots</span>
+      </a>
+      <nav aria-label="Navigation principale">
+        <a href="#fonctionnalites">Fonctionnalités</a>
+        <a href="#typographie">Typographie</a>
+        <a href="#installation">Installation</a>
+        <a href="https://github.com/ymauray/mots#readme" rel="noopener">Documentation</a>
+        <a href="https://github.com/ymauray/mots" rel="noopener">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero wrap">
+      <h1>Écrire un roman,<br>sans toucher à la mise en forme.</h1>
+      <p class="lead">Mots est un petit traitement de textes pour Windows. Vous choisissez le style du paragraphe, il s’occupe du reste. Vos documents restent de vrais fichiers Word.</p>
+      <p class="actions">
+        <a class="button primary" href="https://github.com/ymauray/mots/releases/latest" rel="noopener">Télécharger Mots</a>
+        <a class="button" href="https://github.com/ymauray/mots#readme" rel="noopener">Lire la documentation</a>
+      </p>
+      <p class="note">Windows 10 ou 11, 64 bits · licence MIT · aucun autre logiciel à installer</p>
+
+      <figure class="shot">
+        <img src="assets/capture-editeur.png" width="2168" height="1362"
+             alt="La fenêtre de Mots : le plan des chapitres à gauche, une page de roman avec un titre de chapitre, un dialogue et un séparateur de scène.">
+      </figure>
+    </section>
+
+    <section id="fonctionnalites" class="wrap">
+      <h2>Tout est piloté par les styles</h2>
+      <p class="section-lead">Pas de police, de taille, d’alignement ni de liste à régler à la main. Un paragraphe a un style, et le style décide de tout.</p>
+      <ol class="cards">
+        <li>
+          <span class="num" aria-hidden="true">01</span>
+          <h3>Trois styles suffisent</h3>
+          <p><strong>Normal</strong> pour le texte, <strong>Titre 1</strong> pour les chapitres (chacun commence sur une nouvelle page), <strong>Ellipse</strong> pour le séparateur de scène.</p>
+        </li>
+        <li>
+          <span class="num" aria-hidden="true">02</span>
+          <h3>Un plan toujours à portée</h3>
+          <p>Chaque chapitre apparaît dans le plan, à gauche. Un clic, et vous y êtes ; le plan suit votre curseur pendant que vous écrivez.</p>
+        </li>
+        <li>
+          <span class="num" aria-hidden="true">03</span>
+          <h3>De vrais fichiers Word</h3>
+          <p>Mots enregistre en <code>.docx</code> : Word l’ouvre normalement. Un manuscrit Word existant s’importe, et les styles que Mots ne connaît pas sont signalés au lieu d’être perdus en silence.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section id="typographie" class="wrap split">
+      <div>
+        <h2>Une typographie française soignée</h2>
+        <p class="section-lead">Le bouton <span class="kbd">¶</span> (<span class="kbd">Ctrl</span>+<span class="kbd">Maj</span>+<span class="kbd">8</span>) révèle les caractères non imprimables : espaces, espaces insécables, tabulations, sauts de ligne, fins de paragraphe.</p>
+        <ul class="checks">
+          <li>Espace insécable : <span class="kbd">Ctrl</span>+<span class="kbd">Maj</span>+<span class="kbd">Espace</span></li>
+          <li>Espace insécable fine : <span class="kbd">Ctrl</span>+<span class="kbd">Alt</span>+<span class="kbd">Maj</span>+<span class="kbd">Espace</span></li>
+          <li>Un tiret cadratin en début de ligne, pour un dialogue, est suivi automatiquement d’une espace insécable. Deux <span class="kbd">Ctrl</span>+<span class="kbd">Z</span> annulent l’espace, puis le tiret.</li>
+        </ul>
+      </div>
+      <figure class="shot">
+        <img src="assets/capture-marques.png" width="2168" height="1362" loading="lazy"
+             alt="Le même texte avec les caractères non imprimables affichés : points médians pour les espaces, petits ronds pour les espaces insécables, pieds-de-mouche en fin de paragraphe.">
+      </figure>
+    </section>
+
+    <section class="wrap">
+      <h2>Comment ça se passe</h2>
+      <ol class="steps">
+        <li><h3>Ouvrir</h3><p>Un nouveau document, un document enregistré par Mots, ou un manuscrit Word à importer.</p></li>
+        <li><h3>Écrire</h3><p>Le texte, rien que le texte. <span class="kbd">Entrée</span> après un titre démarre un paragraphe normal.</p></li>
+        <li><h3>Structurer</h3><p>Le style se change dans la barre d’outils ou au clavier : <span class="kbd">Ctrl</span>+<span class="kbd">0</span> et <span class="kbd">Ctrl</span>+<span class="kbd">1</span>.</p></li>
+        <li><h3>Enregistrer</h3><p>Un fichier <code>.docx</code>, que vous retrouvez dans la liste des documents récents.</p></li>
+      </ol>
+    </section>
+
+    <section id="installation" class="wrap install">
+      <h2>Installation</h2>
+      <p class="section-lead">Mots est un seul fichier, autonome : téléchargez-le et lancez-le.</p>
+      <p class="actions">
+        <a class="button primary" href="https://github.com/ymauray/mots/releases/latest" rel="noopener">Télécharger la dernière version</a>
+        <a class="button" href="https://github.com/ymauray/mots/releases" rel="noopener">Toutes les versions</a>
+      </p>
+      <p>Pour le compiler vous-même, avec le <a href="https://dotnet.microsoft.com/download" rel="noopener">SDK .NET 10</a> :</p>
+      <pre><code>git clone https://github.com/ymauray/mots.git
+cd mots
+dotnet publish Mots.slnx -c Release</code></pre>
+      <p class="note">Mots n’ouvre que les documents qu’il a lui-même enregistrés. Pour reprendre un document Word existant, utilisez <strong>Importer</strong>.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap cols">
+      <div>
+        <h2>Ressources</h2>
+        <ul>
+          <li><a href="https://github.com/ymauray/mots#readme" rel="noopener">Documentation</a></li>
+          <li><a href="https://github.com/ymauray/mots/releases" rel="noopener">Versions</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Projet</h2>
+        <ul>
+          <li><a href="https://github.com/ymauray/mots" rel="noopener">Code source</a></li>
+          <li><a href="https://github.com/ymauray/mots/blob/main/LICENSE" rel="noopener">Licence MIT</a></li>
+          <li><a href="https://github.com/ymauray/mots/blob/main/CONTRIBUTING.md" rel="noopener">Contribuer</a></li>
+          <li><a href="https://github.com/ymauray/mots/blob/main/SECURITY.md" rel="noopener">Sécurité</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Communauté</h2>
+        <ul>
+          <li><a href="https://github.com/ymauray/mots/discussions" rel="noopener">Discussions</a></li>
+          <li><a href="https://github.com/ymauray/mots/issues" rel="noopener">Signaler un problème</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="wrap copyright">© 2026 Yannick Mauray · Mots est un logiciel libre, sous licence MIT.</p>
+  </footer>
+</body>
+</html>
