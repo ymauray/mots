@@ -40,6 +40,7 @@
 
     <Window.InputBindings>
         <KeyBinding Gesture="Ctrl+Shift+S" Command="ApplicationCommands.SaveAs"/>
+        <KeyBinding Key="O" Modifiers="Ctrl+Shift" Command="{x:Static local:FileCommands.Import}"/>
         <KeyBinding Key="D0" Modifiers="Ctrl" Command="{x:Static local:StyleCommands.Normal}"/>
         <KeyBinding Key="D1" Modifiers="Ctrl" Command="{x:Static local:StyleCommands.Heading1}"/>
     </Window.InputBindings>
@@ -47,6 +48,7 @@
     <Window.CommandBindings>
         <CommandBinding Command="ApplicationCommands.New" Executed="New_Executed"/>
         <CommandBinding Command="ApplicationCommands.Open" Executed="Open_Executed"/>
+        <CommandBinding Command="{x:Static local:FileCommands.Import}" Executed="Import_Executed"/>
         <CommandBinding Command="ApplicationCommands.Save" Executed="Save_Executed"/>
         <CommandBinding Command="ApplicationCommands.SaveAs" Executed="SaveAs_Executed"/>
         <CommandBinding Command="ApplicationCommands.Print" Executed="Print_Executed"/>
@@ -64,6 +66,9 @@
                         ToolTip="Nouveau (Ctrl+N)"/>
                 <Button Style="{StaticResource IconButton}" Content="&#xE8E5;" Command="ApplicationCommands.Open"
                         ToolTip="Ouvrir (Ctrl+O)"/>
+                <Button Style="{StaticResource IconButton}" Content="&#xE8B5;"
+                        Command="{x:Static local:FileCommands.Import}"
+                        ToolTip="Importer un document Word (Ctrl+Maj+O)"/>
                 <Button Style="{StaticResource IconButton}" Content="&#xE74E;" Command="ApplicationCommands.Save"
                         ToolTip="Enregistrer (Ctrl+S) — Enregistrer sous : Ctrl+Maj+S"/>
                 <Button Style="{StaticResource IconButton}" Content="&#xE749;" Command="ApplicationCommands.Print"

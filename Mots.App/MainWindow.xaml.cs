@@ -13,6 +13,7 @@ public partial class MainWindow : Window
     private const string FileFilter = "Document Word (*.docx)|*.docx";
 
     private string? _currentPath;
+    private string? _importedName; // nom proposé pour un document importé, tant qu'il n'est pas enregistré
     private bool _dirty;
     private bool _updatingToolbar;
 
@@ -69,6 +70,7 @@ public partial class MainWindow : Window
         ParagraphStyles.Apply(paragraph, StyleKind.Normal);
         ReplaceDocument(new FlowDocument(paragraph));
         _currentPath = null;
+        _importedName = null;
         SetDirty(false);
     }
 
@@ -82,11 +84,37 @@ public partial class MainWindow : Window
         {
             ReplaceDocument(DocxConverter.Load(dlg.FileName));
             _currentPath = dlg.FileName;
+            _importedName = null;
             SetDirty(false);
         }
         catch (Exception ex)
         {
             ShowError("Impossible d'ouvrir le fichier", ex);
+        }
+    }
+
+    private void Import_Executed(object sender, ExecutedRoutedEventArgs e)
+    {
+        if (!ConfirmDiscard()) return;
+        var dlg = new OpenFileDialog { Filter = FileFilter, Title = "Importer un document Word" };
+        if (dlg.ShowDialog(this) != true) return;
+
+        Mouse.OverrideCursor = Cursors.Wait; // un manuscrit complet peut prendre quelques secondes
+        try
+        {
+            ReplaceDocument(DocxConverter.Import(dlg.FileName));
+            _currentPath = null;
+            // Le nom diffère de l'original pour ne pas l'écraser par mégarde à l'enregistrement.
+            _importedName = $"{Path.GetFileNameWithoutExtension(dlg.FileName)} (Mots)";
+            SetDirty(true); // le document importé n'existe pas encore au format Mots
+        }
+        catch (Exception ex)
+        {
+            ShowError("Impossible d'importer le document", ex);
+        }
+        finally
+        {
+            Mouse.OverrideCursor = null;
         }
     }
 
@@ -102,7 +130,7 @@ public partial class MainWindow : Window
         {
             Filter = FileFilter,
             DefaultExt = ".docx",
-            FileName = _currentPath is null ? "Sans titre" : Path.GetFileName(_currentPath),
+            FileName = DisplayName,
         };
         return dlg.ShowDialog(this) == true && TrySave(dlg.FileName);
     }
@@ -151,8 +179,7 @@ public partial class MainWindow : Window
     private bool ConfirmDiscard()
     {
         if (!_dirty) return true;
-        var name = _currentPath is null ? "Sans titre" : Path.GetFileName(_currentPath);
-        var choice = DialogWindow.Show(this, $"Enregistrer les modifications de « {name} » ?",
+        var choice = DialogWindow.Show(this, $"Enregistrer les modifications de « {DisplayName} » ?",
             "Vos modifications seront perdues si vous ne les enregistrez pas.",
             ["Enregistrer", "Ne pas enregistrer", "Annuler"], defaultIndex: 0, cancelIndex: 2);
         return choice switch
@@ -222,13 +249,15 @@ public partial class MainWindow : Window
         _updatingToolbar = wasUpdating;
     }
 
-    /// <summary>Après un titre, « Entrée » en fin de paragraphe démarre un paragraphe « Normal » (style suivant).</summary>
+    /// <summary>« Entrée » en fin de paragraphe démarre un paragraphe du style suivant (après un titre : « Normal »).</summary>
     private void Editor_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key != Key.Enter || Keyboard.Modifiers != ModifierKeys.None || !Editor.Selection.IsEmpty) return;
 
         var caret = Editor.CaretPosition;
-        if (caret.Paragraph is not { } current || ParagraphStyles.KindOf(current) != StyleKind.Heading1) return;
+        if (caret.Paragraph is not { } current) return;
+        var style = ParagraphStyles.Get(ParagraphStyles.KindOf(current));
+        if (style.NextKind == style.Kind) return;
         if (new TextRange(caret, current.ContentEnd).Text.Length > 0) return;
 
         e.Handled = true;
@@ -237,7 +266,7 @@ public partial class MainWindow : Window
         {
             EditingCommands.EnterParagraphBreak.Execute(null, Editor);
             if (Editor.CaretPosition.Paragraph is { } next && next != current)
-                ParagraphStyles.Apply(next, StyleKind.Normal);
+                ParagraphStyles.Apply(next, style.NextKind);
         }
         finally
         {
@@ -360,8 +389,9 @@ public partial class MainWindow : Window
         UpdateTitle();
     }
 
-    private void UpdateTitle() =>
-        Title = $"{(_dirty ? "*" : "")}{(_currentPath is null ? "Sans titre" : Path.GetFileName(_currentPath))} — Mots";
+    private string DisplayName => _currentPath is null ? _importedName ?? "Sans titre" : Path.GetFileName(_currentPath);
+
+    private void UpdateTitle() => Title = $"{(_dirty ? "*" : "")}{DisplayName} — Mots";
 
     private void UpdateStatus()
     {
@@ -370,6 +400,11 @@ public partial class MainWindow : Window
         var chars = text.TrimEnd('\r', '\n').Length;
         StatusText.Text = $"{words} mot(s) · {chars} caractère(s)";
     }
+}
+
+public static class FileCommands
+{
+    public static readonly RoutedCommand Import = new(nameof(Import), typeof(FileCommands));
 }
 
 public static class StyleCommands

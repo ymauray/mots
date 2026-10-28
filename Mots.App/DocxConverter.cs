@@ -95,14 +95,17 @@ public static class DocxConverter
         var style = new W.Style { Type = W.StyleValues.Paragraph, StyleId = d.WordId };
         if (isNormal)
             style.Default = true;
+        if (d.IsCustom)
+            style.CustomStyle = true;
 
         // Ordre des éléments imposé par le schéma.
         style.Append(new W.StyleName { Val = d.WordName });
         if (!isNormal)
         {
             style.Append(new W.BasedOn { Val = ParagraphStyles.Normal.WordId });
-            style.Append(new W.NextParagraphStyle { Val = ParagraphStyles.Normal.WordId });
-            style.Append(new W.UIPriority { Val = 9 });
+            style.Append(new W.NextParagraphStyle { Val = ParagraphStyles.Get(d.NextKind).WordId });
+            if (!d.IsCustom)
+                style.Append(new W.UIPriority { Val = 9 });
         }
         style.Append(new W.PrimaryStyle());
 
@@ -134,8 +137,10 @@ public static class DocxConverter
             });
         if (d.Bold)
             run.Append(new W.Bold());
-        run.Append(new W.FontSize { Val = Twips(d.FontSizePt * 2) });
-        style.Append(run);
+        if (isNormal || d.FontSizePt != ParagraphStyles.Normal.FontSizePt) // sinon, hérité de « Normal »
+            run.Append(new W.FontSize { Val = Twips(d.FontSizePt * 2) });
+        if (run.HasChildren)
+            style.Append(run);
 
         return style;
     }
@@ -218,32 +223,45 @@ public static class DocxConverter
 
     // ---------- Lecture ----------
 
-    public static FlowDocument Load(string path)
+    /// <summary>Ouvre un document enregistré par Mots (le marqueur de compatibilité est exigé).</summary>
+    public static FlowDocument Load(string path) => Read(path, requireMarker: true);
+
+    /// <summary>Importe un document Word quelconque, sans marqueur Mots.</summary>
+    public static FlowDocument Import(string path) => Read(path, requireMarker: false);
+
+    /// <exception cref="IncompatibleFileException">
+    /// Le fichier n'est pas un document Word valide, n'a pas le marqueur Mots (ouverture) ou utilise un style qui
+    /// n'existe pas dans Mots.
+    /// </exception>
+    private static FlowDocument Read(string path, bool requireMarker)
     {
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         using var package = OpenPackage(stream);
 
         var main = package.MainDocumentPart
                    ?? throw new InvalidDataException("Ce fichier n'est pas un document Word valide.");
-        MotsMetadata.Verify(main);
+        if (requireMarker)
+            MotsMetadata.Verify(main);
         var body = main.Document?.Body
                    ?? throw new InvalidDataException("Ce fichier n'est pas un document Word valide.");
 
+        var reader = new Reader(main);
         var document = new FlowDocument();
         foreach (var element in body.ChildElements)
         {
             switch (element)
             {
                 case W.Paragraph paragraph:
-                    document.Blocks.Add(ToParagraph(paragraph));
+                    document.Blocks.Add(reader.ToParagraph(paragraph));
                     break;
                 case W.Table or W.SdtBlock:
                     // Pas de gestion des tableaux : on en garde le texte, cellule par cellule.
                     foreach (var inner in element.Descendants<W.Paragraph>())
-                        document.Blocks.Add(ToParagraph(inner));
+                        document.Blocks.Add(reader.ToParagraph(inner));
                     break;
             }
         }
+        reader.ThrowIfUnsupportedStyles();
 
         if (document.Blocks.Count == 0)
         {
@@ -266,50 +284,119 @@ public static class DocxConverter
         }
     }
 
-    private static Paragraph ToParagraph(W.Paragraph source)
+    /// <summary>
+    /// Convertit les paragraphes Word. Les styles sont reconnus par leur nom (l'identifiant varie selon la langue de
+    /// Word : « Titre1 » en français) ; tout style inconnu de Mots est relevé puis fait rejeter le document.
+    /// </summary>
+    private sealed class Reader
     {
-        var paragraph = new Paragraph();
+        private const string DefaultCharacterStyleName = "Default Paragraph Font";
 
-        var styleId = source.ParagraphProperties?.ParagraphStyleId?.Val?.Value;
-        ParagraphStyles.Apply(paragraph,
-            styleId == ParagraphStyles.Heading1.WordId ? StyleKind.Heading1 : StyleKind.Normal);
+        private readonly Dictionary<string, string> _styleNames = [];
+        private readonly string? _defaultParagraphStyleId;
+        private readonly Dictionary<string, int> _unsupportedParagraphStyles = [];
+        private readonly Dictionary<string, int> _unsupportedCharacterStyles = [];
 
-        foreach (var run in source.Descendants<W.Run>())
-            AddRun(paragraph, run);
-
-        return paragraph;
-    }
-
-    private static void AddRun(Paragraph paragraph, W.Run source)
-    {
-        var text = new StringBuilder();
-        void FlushText()
+        public Reader(MainDocumentPart main)
         {
-            if (text.Length == 0) return;
-            paragraph.Inlines.Add(StyledRun(text.ToString(), source.RunProperties));
-            text.Clear();
-        }
-
-        foreach (var child in source.ChildElements)
-        {
-            switch (child)
+            foreach (var style in main.StyleDefinitionsPart?.Styles?.Elements<W.Style>() ?? Enumerable.Empty<W.Style>())
             {
-                case W.Text t:
-                    text.Append(t.Text);
-                    break;
-                case W.TabChar:
-                    text.Append('\t');
-                    break;
-                case W.NoBreakHyphen:
-                    text.Append('-');
-                    break;
-                case W.Break:
-                    FlushText();
-                    paragraph.Inlines.Add(new LineBreak());
-                    break;
+                if (style.StyleId?.Value is not { } id) continue;
+                _styleNames[id] = style.StyleName?.Val?.Value ?? id;
+                if (style.Type?.Value == W.StyleValues.Paragraph && style.Default?.Value == true)
+                    _defaultParagraphStyleId = id;
             }
         }
-        FlushText();
+
+        public Paragraph ToParagraph(W.Paragraph source)
+        {
+            var paragraph = new Paragraph();
+            ParagraphStyles.Apply(paragraph, ResolveParagraphStyle(source));
+
+            foreach (var run in source.Descendants<W.Run>())
+                AddRun(paragraph, run);
+
+            return paragraph;
+        }
+
+        public void ThrowIfUnsupportedStyles()
+        {
+            if (_unsupportedParagraphStyles.Count == 0 && _unsupportedCharacterStyles.Count == 0) return;
+
+            var found = _unsupportedParagraphStyles.Select(kv => $"« {kv.Key} » ({Count(kv.Value, "paragraphe")})")
+                .Concat(_unsupportedCharacterStyles.Select(kv => $"« {kv.Key} » ({Count(kv.Value, "passage")})"))
+                .ToList();
+            const int shown = 6;
+            var list = string.Join(", ", found.Take(shown));
+            if (found.Count > shown)
+                list += $" et {found.Count - shown} autre(s)";
+
+            throw new IncompatibleFileException(
+                $"Ce document utilise des styles qui n'existent pas dans Mots : {list}. " +
+                "Remplacez-les dans Word par « Normal » ou « Titre 1 », puis réessayez.");
+        }
+
+        private static string Count(int n, string noun) => n > 1 ? $"{n} {noun}s" : $"{n} {noun}";
+
+        private static void Note(Dictionary<string, int> counts, string name) =>
+            counts[name] = counts.GetValueOrDefault(name) + 1;
+
+        private StyleKind ResolveParagraphStyle(W.Paragraph source)
+        {
+            // Sans style explicite, le paragraphe prend le style par défaut du document (« Normal » dans Word).
+            var id = source.ParagraphProperties?.ParagraphStyleId?.Val?.Value ?? _defaultParagraphStyleId;
+            if (id is null) return StyleKind.Normal;
+
+            var name = _styleNames.GetValueOrDefault(id, id);
+            foreach (var definition in ParagraphStyles.All)
+            {
+                if (string.Equals(definition.WordName, name, StringComparison.OrdinalIgnoreCase)
+                    || (!_styleNames.ContainsKey(id) && definition.WordId == id))
+                    return definition.Kind;
+            }
+
+            Note(_unsupportedParagraphStyles, name);
+            return StyleKind.Normal;
+        }
+
+        private void AddRun(Paragraph paragraph, W.Run source)
+        {
+            if (source.RunProperties?.RunStyle?.Val?.Value is { } styleId)
+            {
+                var name = _styleNames.GetValueOrDefault(styleId, styleId);
+                if (!string.Equals(name, DefaultCharacterStyleName, StringComparison.OrdinalIgnoreCase))
+                    Note(_unsupportedCharacterStyles, name);
+            }
+
+            var text = new StringBuilder();
+            void FlushText()
+            {
+                if (text.Length == 0) return;
+                paragraph.Inlines.Add(StyledRun(text.ToString(), source.RunProperties));
+                text.Clear();
+            }
+
+            foreach (var child in source.ChildElements)
+            {
+                switch (child)
+                {
+                    case W.Text t:
+                        text.Append(t.Text);
+                        break;
+                    case W.TabChar:
+                        text.Append('\t');
+                        break;
+                    case W.NoBreakHyphen:
+                        text.Append('-');
+                        break;
+                    case W.Break:
+                        FlushText();
+                        paragraph.Inlines.Add(new LineBreak());
+                        break;
+                }
+            }
+            FlushText();
+        }
     }
 
     private static Run StyledRun(string text, W.RunProperties? props)

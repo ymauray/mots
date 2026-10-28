@@ -4,7 +4,7 @@ using System.Windows.Media;
 
 namespace Mots;
 
-public enum StyleKind { Normal, Heading1 }
+public enum StyleKind { Normal, Heading1, Ellipse }
 
 /// <summary>
 /// Les styles de paragraphe de Mots : source unique pour l'affichage dans l'éditeur (WPF)
@@ -22,31 +22,40 @@ public static class ParagraphStyles
     /// <param name="WordId">Identifiant du style dans le .docx (« Heading1 » est celui de Word pour Titre 1).</param>
     /// <param name="WordName">Nom interne du style (Word l'affiche localisé : « Titre 1 »).</param>
     /// <param name="LineSpacing">Multiple de l'interligne simple (1,5 = « 1,5 ligne »).</param>
+    /// <param name="NextKind">Style du paragraphe créé par « Entrée » en fin de paragraphe.</param>
+    /// <param name="IsCustom">Style personnalisé, par opposition aux styles intégrés de Word.</param>
     public sealed record Definition(
         StyleKind Kind, string WordId, string WordName, string DisplayName,
         double FontSizePt, bool Bold, TextAlignment Alignment, double FirstLineIndentCm,
         double SpaceBeforePt, double SpaceAfterPt, double LineSpacing,
-        bool PageBreakBefore, int? OutlineLevel);
+        bool PageBreakBefore, int? OutlineLevel, StyleKind NextKind, bool IsCustom);
 
     public static Definition Normal { get; } = new(
         StyleKind.Normal, "Normal", "Normal", "Normal",
         FontSizePt: 12, Bold: false, TextAlignment.Justify, FirstLineIndentCm: 0.5,
         SpaceBeforePt: 0, SpaceAfterPt: 6, LineSpacing: 1.5,
-        PageBreakBefore: false, OutlineLevel: null);
+        PageBreakBefore: false, OutlineLevel: null, StyleKind.Normal, IsCustom: false);
 
     public static Definition Heading1 { get; } = new(
         StyleKind.Heading1, "Heading1", "heading 1", "Titre 1",
         FontSizePt: 18, Bold: true, TextAlignment.Left, FirstLineIndentCm: 0.5,
         SpaceBeforePt: 24, SpaceAfterPt: 12, LineSpacing: 1.5,
-        PageBreakBefore: true, OutlineLevel: 0);
+        PageBreakBefore: true, OutlineLevel: 0, StyleKind.Normal, IsCustom: false);
 
-    public static IReadOnlyList<Definition> All { get; } = [Normal, Heading1];
+    /// <summary>Séparateur de scène (« *** »).</summary>
+    public static Definition Ellipse { get; } = new(
+        StyleKind.Ellipse, "Ellipse", "Ellipse", "Ellipse",
+        FontSizePt: 12, Bold: false, TextAlignment.Center, FirstLineIndentCm: 0,
+        SpaceBeforePt: 12, SpaceAfterPt: 12, LineSpacing: 1.5,
+        PageBreakBefore: false, OutlineLevel: null, StyleKind.Normal, IsCustom: true);
 
-    public static Definition Get(StyleKind kind) => kind == StyleKind.Heading1 ? Heading1 : Normal;
+    public static IReadOnlyList<Definition> All { get; } = [Normal, Heading1, Ellipse];
+
+    public static Definition Get(StyleKind kind) => All.First(d => d.Kind == kind);
 
     /// <summary>Style d'un paragraphe ; sans marque, c'est « Normal ».</summary>
     public static StyleKind KindOf(Paragraph paragraph) =>
-        paragraph.Tag as string == Heading1.WordId ? StyleKind.Heading1 : StyleKind.Normal;
+        All.FirstOrDefault(d => d.WordId == paragraph.Tag as string)?.Kind ?? StyleKind.Normal;
 
     public static void Apply(Paragraph paragraph, StyleKind kind)
     {
