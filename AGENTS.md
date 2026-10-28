@@ -24,9 +24,12 @@ Pas de linter. Si `Mots.exe` tourne en Debug, il verrouille la compilation : lan
 
 ## Conventions
 
-- Interface, messages et commentaires en français ; identifiants en anglais. Commits en français.
+- Interface, messages et commentaires en français ; identifiants en anglais.
 - Pas de mise en forme manuelle : toute nouvelle mise en forme passe par un style de `ParagraphStyles`.
-- Nettoyer le code mort ; commiter par petites étapes validées.
+- Nettoyer le code mort ; avancer par petites étapes, validées une à une par l'utilisateur.
+- **Commits : uniquement sur demande de l'utilisateur.** Ne pas demander s'il faut commiter après chaque étape ; attendre qu'il le dise. Messages en français.
+- `main` est protégée (check `build` requis, pas de push direct, merge en squash) : tout passe par une pull request.
+- L'état d'avancement et la suite prévue sont dans [`ROADMAP.md`](ROADMAP.md) : le lire en début de session, le tenir à jour.
 - `Référence/` (manuscrit de travail) est ignoré par git : ne jamais le lire pour autre chose qu'une analyse, ne jamais le modifier ni le commiter.
 - Fins de ligne : LF dans le dépôt, CRLF dans le répertoire de travail (`.gitattributes`).
 
