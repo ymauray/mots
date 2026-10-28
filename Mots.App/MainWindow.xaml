@@ -139,9 +139,16 @@
                            Text="Aucun chapitre. Appliquez le style « Titre 1 » (Ctrl+1) à un titre pour l'ajouter au plan."/>
                 <ListBox x:Name="OutlineList" BorderThickness="0" Background="Transparent" Padding="4,0"
                          PreviewMouseLeftButtonUp="OutlineList_PreviewMouseLeftButtonUp" KeyDown="OutlineList_KeyDown">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                            <Setter Property="MinHeight" Value="0"/>
+                            <Setter Property="Padding" Value="0"/>
+                            <Setter Property="Margin" Value="0,1"/>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Title}" ToolTip="{Binding Title}" Padding="8,4"
+                            <TextBlock Text="{Binding Title}" ToolTip="{Binding Title}" Padding="8,3"
                                        TextTrimming="CharacterEllipsis"/>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
