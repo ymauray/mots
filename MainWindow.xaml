@@ -1,0 +1,152 @@
+<Window x:Class="Mots.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Mots" Height="700" Width="1000"
+        Closing="Window_Closing">
+    <Window.Resources>
+        <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+        <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="FontFamily" Value="{StaticResource IconFont}"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Width" Value="38"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="1,0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style x:Key="IconToggle" TargetType="ToggleButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
+            <Setter Property="FontFamily" Value="{StaticResource IconFont}"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Width" Value="38"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="1,0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style x:Key="Divider" TargetType="Rectangle">
+            <Setter Property="Width" Value="1"/>
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="Margin" Value="8,0"/>
+            <Setter Property="Fill" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+            <Setter Property="Opacity" Value="0.35"/>
+        </Style>
+    </Window.Resources>
+
+    <Window.InputBindings>
+        <KeyBinding Gesture="Ctrl+Shift+S" Command="ApplicationCommands.SaveAs"/>
+    </Window.InputBindings>
+
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.New" Executed="New_Executed"/>
+        <CommandBinding Command="ApplicationCommands.Open" Executed="Open_Executed"/>
+        <CommandBinding Command="ApplicationCommands.Save" Executed="Save_Executed"/>
+        <CommandBinding Command="ApplicationCommands.SaveAs" Executed="SaveAs_Executed"/>
+        <CommandBinding Command="ApplicationCommands.Print" Executed="Print_Executed"/>
+        <CommandBinding Command="ApplicationCommands.Find" Executed="Find_Executed"/>
+    </Window.CommandBindings>
+
+    <DockPanel>
+        <!-- Barre d'outils -->
+        <Border DockPanel.Dock="Top" Padding="12,8"
+                BorderThickness="0,0,0,1" BorderBrush="#22808080">
+            <WrapPanel VerticalAlignment="Center">
+                <Button Style="{StaticResource IconButton}" Content="&#xE710;" Command="ApplicationCommands.New"
+                        ToolTip="Nouveau (Ctrl+N)"/>
+                <Button Style="{StaticResource IconButton}" Content="&#xE8E5;" Command="ApplicationCommands.Open"
+                        ToolTip="Ouvrir (Ctrl+O)"/>
+                <Button Style="{StaticResource IconButton}" Content="&#xE74E;" Command="ApplicationCommands.Save"
+                        ToolTip="Enregistrer (Ctrl+S) — Enregistrer sous : Ctrl+Maj+S"/>
+                <Button Style="{StaticResource IconButton}" Content="&#xE749;" Command="ApplicationCommands.Print"
+                        ToolTip="Imprimer (Ctrl+P)"/>
+
+                <Rectangle Style="{StaticResource Divider}"/>
+
+                <Button Style="{StaticResource IconButton}" Content="&#xE7A7;" Command="ApplicationCommands.Undo"
+                        CommandTarget="{Binding ElementName=Editor}" ToolTip="Annuler (Ctrl+Z)"/>
+                <Button Style="{StaticResource IconButton}" Content="&#xE7A6;" Command="ApplicationCommands.Redo"
+                        CommandTarget="{Binding ElementName=Editor}" ToolTip="Rétablir (Ctrl+Y)"/>
+                <Button Style="{StaticResource IconButton}" Content="&#xE721;" Command="ApplicationCommands.Find"
+                        ToolTip="Rechercher / Remplacer (Ctrl+F)"/>
+
+                <Rectangle Style="{StaticResource Divider}"/>
+
+                <ComboBox x:Name="FontFamilyBox" Width="170" Margin="0,0,6,0"
+                          SelectionChanged="FontFamily_Changed" ToolTip="Police"/>
+                <ComboBox x:Name="FontSizeBox" Width="70"
+                          SelectionChanged="FontSize_Changed" ToolTip="Taille"/>
+
+                <Rectangle Style="{StaticResource Divider}"/>
+
+                <ToggleButton x:Name="BoldButton" Style="{StaticResource IconToggle}" Content="&#xE8DD;"
+                              Command="EditingCommands.ToggleBold" CommandTarget="{Binding ElementName=Editor}"
+                              ToolTip="Gras (Ctrl+B)"/>
+                <ToggleButton x:Name="ItalicButton" Style="{StaticResource IconToggle}" Content="&#xE8DB;"
+                              Command="EditingCommands.ToggleItalic" CommandTarget="{Binding ElementName=Editor}"
+                              ToolTip="Italique (Ctrl+I)"/>
+                <ToggleButton x:Name="UnderlineButton" Style="{StaticResource IconToggle}" Content="&#xE8DC;"
+                              Command="EditingCommands.ToggleUnderline" CommandTarget="{Binding ElementName=Editor}"
+                              ToolTip="Souligné (Ctrl+U)"/>
+
+                <Rectangle Style="{StaticResource Divider}"/>
+
+                <ToggleButton x:Name="AlignLeftButton" Style="{StaticResource IconToggle}" Content="&#xE8E4;"
+                              Command="EditingCommands.AlignLeft" CommandTarget="{Binding ElementName=Editor}"
+                              ToolTip="Aligner à gauche (Ctrl+L)"/>
+                <ToggleButton x:Name="AlignCenterButton" Style="{StaticResource IconToggle}" Content="&#xE8E3;"
+                              Command="EditingCommands.AlignCenter" CommandTarget="{Binding ElementName=Editor}"
+                              ToolTip="Centrer (Ctrl+E)"/>
+                <ToggleButton x:Name="AlignRightButton" Style="{StaticResource IconToggle}" Content="&#xE8E2;"
+                              Command="EditingCommands.AlignRight" CommandTarget="{Binding ElementName=Editor}"
+                              ToolTip="Aligner à droite (Ctrl+R)"/>
+
+                <Rectangle Style="{StaticResource Divider}"/>
+
+                <ToggleButton Style="{StaticResource IconToggle}" Content="&#xE8FD;"
+                              Command="EditingCommands.ToggleBullets" CommandTarget="{Binding ElementName=Editor}"
+                              ToolTip="Liste à puces"/>
+                <ToggleButton Style="{StaticResource IconToggle}" FontFamily="Segoe UI" FontSize="13" Content="1."
+                              Command="EditingCommands.ToggleNumbering" CommandTarget="{Binding ElementName=Editor}"
+                              ToolTip="Liste numérotée"/>
+            </WrapPanel>
+        </Border>
+
+        <!-- Barre d'état -->
+        <Border DockPanel.Dock="Bottom" Padding="16,6" BorderThickness="0,1,0,0" BorderBrush="#22808080">
+            <TextBlock x:Name="StatusText" FontSize="12" Opacity="0.7"/>
+        </Border>
+
+        <!-- Rechercher / Remplacer -->
+        <Border x:Name="FindBar" DockPanel.Dock="Top" Visibility="Collapsed" Padding="12,8"
+                BorderThickness="0,0,0,1" BorderBrush="#22808080">
+            <StackPanel Orientation="Horizontal">
+                <TextBox x:Name="FindBox" Width="200" ToolTip="Rechercher" KeyDown="FindBox_KeyDown"/>
+                <TextBox x:Name="ReplaceBox" Width="200" Margin="8,0,0,0" ToolTip="Remplacer par"/>
+                <Button Content="Suivant" Margin="8,0,0,0" Padding="12,5" Click="FindNext_Click"/>
+                <Button Content="Remplacer" Margin="4,0,0,0" Padding="12,5" Click="Replace_Click"/>
+                <Button Content="Tout remplacer" Margin="4,0,0,0" Padding="12,5" Click="ReplaceAll_Click"/>
+                <Button Style="{StaticResource IconButton}" Content="&#xE711;" Margin="8,0,0,0"
+                        ToolTip="Fermer (Échap)" Click="CloseFind_Click"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Zone de travail : une « page » posée sur un fond neutre -->
+        <Grid Background="#14808080">
+            <Border HorizontalAlignment="Stretch" MaxWidth="820" Margin="24,20" Background="White"
+                    CornerRadius="4">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="18" ShadowDepth="2" Opacity="0.25"/>
+                </Border.Effect>
+                <RichTextBox x:Name="Editor" AcceptsTab="True" VerticalScrollBarVisibility="Auto"
+                             Background="White" Foreground="Black" BorderThickness="0"
+                             Padding="56,48" FontFamily="Calibri" FontSize="16"
+                             SelectionChanged="Editor_SelectionChanged" TextChanged="Editor_TextChanged"
+                             SpellCheck.IsEnabled="True" Language="fr-FR"/>
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>
