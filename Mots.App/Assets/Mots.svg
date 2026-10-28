@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>Mots</title>
+  <defs>
+    <linearGradient id="fond" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a5a96"/>
+      <stop offset="1" stop-color="#1b2a4a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fond : carré arrondi bleu nuit -->
+  <rect width="1024" height="1024" rx="224" fill="url(#fond)"/>
+
+  <!-- Page avec coin plié -->
+  <path d="M232 150H680L792 262V874H232Z" fill="#fbf8f1"/>
+  <path d="M680 150V262H792Z" fill="#cfd8ea"/>
+
+  <!-- Initiale -->
+  <path d="M300 640V280H370L512 500L654 280H724V640H654V400L540 575H484L370 400V640Z" fill="#1b2a4a"/>
+
+  <!-- Séparateur de scène (style « Ellipse ») -->
+  <g fill="#1b2a4a">
+    <circle cx="452" cy="738" r="24"/>
+    <circle cx="512" cy="738" r="24"/>
+    <circle cx="572" cy="738" r="24"/>
+  </g>
+</svg>
