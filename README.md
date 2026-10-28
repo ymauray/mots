@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/ymauray/mots/actions/workflows/ci.yml/badge.svg)](https://github.com/ymauray/mots/actions/workflows/ci.yml)
 [![Licence : MIT](https://img.shields.io/github/license/ymauray/mots)](LICENSE)
+[![repocheck](https://img.shields.io/badge/repocheck%201.3.0-100%2F100-brightgreen)](https://github.com/ymauray/repocheck)
 
 Mots est un petit traitement de textes pour Windows, pensé pour écrire des romans. Tout y est piloté par les **styles** : pas de police, de taille, d'alignement ni de liste à régler à la main, seulement le style du paragraphe. Les documents sont de vrais fichiers Word (`.docx`).
 
