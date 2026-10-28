@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Mots"
         Title="Mots" Height="700" Width="1000"
-        Closing="Window_Closing">
+        Closing="Window_Closing" PreviewMouseWheel="Window_PreviewMouseWheel">
     <Window.Resources>
         <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
 
@@ -29,6 +29,12 @@
             <Setter Property="BorderThickness" Value="0"/>
         </Style>
 
+        <Style x:Key="StatusButton" TargetType="Button" BasedOn="{StaticResource IconButton}">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="26"/>
+        </Style>
+
         <Style x:Key="Divider" TargetType="Rectangle">
             <Setter Property="Width" Value="1"/>
             <Setter Property="Height" Value="22"/>
@@ -42,6 +48,11 @@
         <KeyBinding Gesture="Ctrl+Shift+S" Command="ApplicationCommands.SaveAs"/>
         <KeyBinding Key="O" Modifiers="Ctrl+Shift" Command="{x:Static local:FileCommands.Import}"/>
         <KeyBinding Key="D8" Modifiers="Ctrl+Shift" Command="{x:Static local:ViewCommands.ToggleMarks}"/>
+        <KeyBinding Key="Add" Modifiers="Ctrl" Command="{x:Static local:ViewCommands.ZoomIn}"/>
+        <KeyBinding Key="OemPlus" Modifiers="Ctrl" Command="{x:Static local:ViewCommands.ZoomIn}"/>
+        <KeyBinding Key="OemPlus" Modifiers="Ctrl+Shift" Command="{x:Static local:ViewCommands.ZoomIn}"/>
+        <KeyBinding Key="Subtract" Modifiers="Ctrl" Command="{x:Static local:ViewCommands.ZoomOut}"/>
+        <KeyBinding Key="OemMinus" Modifiers="Ctrl" Command="{x:Static local:ViewCommands.ZoomOut}"/>
         <KeyBinding Key="D0" Modifiers="Ctrl" Command="{x:Static local:StyleCommands.Normal}"/>
         <KeyBinding Key="D1" Modifiers="Ctrl" Command="{x:Static local:StyleCommands.Heading1}"/>
     </Window.InputBindings>
@@ -51,6 +62,8 @@
         <CommandBinding Command="ApplicationCommands.Open" Executed="Open_Executed"/>
         <CommandBinding Command="{x:Static local:FileCommands.Import}" Executed="Import_Executed"/>
         <CommandBinding Command="{x:Static local:ViewCommands.ToggleMarks}" Executed="ToggleMarks_Executed"/>
+        <CommandBinding Command="{x:Static local:ViewCommands.ZoomIn}" Executed="ZoomIn_Executed"/>
+        <CommandBinding Command="{x:Static local:ViewCommands.ZoomOut}" Executed="ZoomOut_Executed"/>
         <CommandBinding Command="ApplicationCommands.Save" Executed="Save_Executed"/>
         <CommandBinding Command="ApplicationCommands.SaveAs" Executed="SaveAs_Executed"/>
         <CommandBinding Command="ApplicationCommands.Print" Executed="Print_Executed"/>
@@ -112,8 +125,22 @@
         </Border>
 
         <!-- Barre d'état -->
-        <Border DockPanel.Dock="Bottom" Padding="16,6" BorderThickness="0,1,0,0" BorderBrush="#22808080">
-            <TextBlock x:Name="StatusText" FontSize="12" Opacity="0.7"/>
+        <Border DockPanel.Dock="Bottom" Padding="16,2" BorderThickness="0,1,0,0" BorderBrush="#22808080">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Style="{StaticResource StatusButton}" Content="&#xE738;" Click="ZoomOut_Click"
+                            ToolTip="Zoom arrière (Ctrl+molette)"/>
+                    <Slider x:Name="ZoomSlider" Width="120" Minimum="50" Maximum="300" Value="100"
+                            TickFrequency="10" IsSnapToTickEnabled="True" VerticalAlignment="Center"
+                            ValueChanged="ZoomSlider_ValueChanged" ToolTip="Zoom"/>
+                    <Button Style="{StaticResource StatusButton}" Content="&#xE710;" Click="ZoomIn_Click"
+                            ToolTip="Zoom avant (Ctrl+molette)"/>
+                    <Button x:Name="ZoomText" Style="{StaticResource StatusButton}" Width="60"
+                            FontFamily="Segoe UI" Content="100 %" Click="ZoomReset_Click"
+                            ToolTip="Revenir à 100 %"/>
+                </StackPanel>
+                <TextBlock x:Name="StatusText" FontSize="12" Opacity="0.7" VerticalAlignment="Center"/>
+            </DockPanel>
         </Border>
 
         <!-- Rechercher / Remplacer -->
@@ -160,6 +187,9 @@
         <Grid Background="#14808080">
             <Border HorizontalAlignment="Stretch" MaxWidth="820" Margin="24,20" Background="White"
                     CornerRadius="4">
+                <Border.LayoutTransform>
+                    <ScaleTransform x:Name="PageScale"/>
+                </Border.LayoutTransform>
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="18" ShadowDepth="2" Opacity="0.25"/>
                 </Border.Effect>

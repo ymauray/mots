@@ -53,6 +53,7 @@ public partial class MainWindow : Window
             EditingCommands.ToggleBullets, EditingCommands.ToggleNumbering,
             EditingCommands.IncreaseIndentation, EditingCommands.DecreaseIndentation,
             EditingCommands.IncreaseFontSize, EditingCommands.DecreaseFontSize,
+            EditingCommands.ToggleSubscript, EditingCommands.ToggleSuperscript, // non enregistrés, et Ctrl+= sert au zoom
         ];
         foreach (var command in commands)
             Editor.CommandBindings.Add(new CommandBinding(command, (_, _) => { }, (_, e) =>
@@ -419,6 +420,8 @@ public static class FileCommands
 public static class ViewCommands
 {
     public static readonly RoutedCommand ToggleMarks = new(nameof(ToggleMarks), typeof(ViewCommands));
+    public static readonly RoutedCommand ZoomIn = new(nameof(ZoomIn), typeof(ViewCommands));
+    public static readonly RoutedCommand ZoomOut = new(nameof(ZoomOut), typeof(ViewCommands));
 }
 
 public static class StyleCommands
