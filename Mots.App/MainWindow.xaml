@@ -41,6 +41,7 @@
     <Window.InputBindings>
         <KeyBinding Gesture="Ctrl+Shift+S" Command="ApplicationCommands.SaveAs"/>
         <KeyBinding Key="O" Modifiers="Ctrl+Shift" Command="{x:Static local:FileCommands.Import}"/>
+        <KeyBinding Key="D8" Modifiers="Ctrl+Shift" Command="{x:Static local:ViewCommands.ToggleMarks}"/>
         <KeyBinding Key="D0" Modifiers="Ctrl" Command="{x:Static local:StyleCommands.Normal}"/>
         <KeyBinding Key="D1" Modifiers="Ctrl" Command="{x:Static local:StyleCommands.Heading1}"/>
     </Window.InputBindings>
@@ -49,6 +50,7 @@
         <CommandBinding Command="ApplicationCommands.New" Executed="New_Executed"/>
         <CommandBinding Command="ApplicationCommands.Open" Executed="Open_Executed"/>
         <CommandBinding Command="{x:Static local:FileCommands.Import}" Executed="Import_Executed"/>
+        <CommandBinding Command="{x:Static local:ViewCommands.ToggleMarks}" Executed="ToggleMarks_Executed"/>
         <CommandBinding Command="ApplicationCommands.Save" Executed="Save_Executed"/>
         <CommandBinding Command="ApplicationCommands.SaveAs" Executed="SaveAs_Executed"/>
         <CommandBinding Command="ApplicationCommands.Print" Executed="Print_Executed"/>
@@ -100,6 +102,12 @@
                 <ToggleButton x:Name="UnderlineButton" Style="{StaticResource IconToggle}" Content="&#xE8DC;"
                               Command="EditingCommands.ToggleUnderline" CommandTarget="{Binding ElementName=Editor}"
                               ToolTip="Souligné (Ctrl+U)"/>
+
+                <Rectangle Style="{StaticResource Divider}"/>
+
+                <ToggleButton x:Name="MarksButton" Style="{StaticResource IconToggle}" FontFamily="Segoe UI" FontSize="18"
+                              Content="&#182;" Checked="Marks_Changed" Unchecked="Marks_Changed"
+                              ToolTip="Afficher les caractères non imprimables (Ctrl+Maj+8)"/>
             </WrapPanel>
         </Border>
 
@@ -148,12 +156,15 @@
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="18" ShadowDepth="2" Opacity="0.25"/>
                 </Border.Effect>
-                <RichTextBox x:Name="Editor" AcceptsTab="True" VerticalScrollBarVisibility="Auto"
-                             Background="White" Foreground="Black" BorderThickness="0"
-                             Padding="56,48"
-                             PreviewKeyDown="Editor_PreviewKeyDown"
-                             SelectionChanged="Editor_SelectionChanged" TextChanged="Editor_TextChanged"
-                             SpellCheck.IsEnabled="True" Language="fr-FR"/>
+                <Grid>
+                    <RichTextBox x:Name="Editor" AcceptsTab="True" VerticalScrollBarVisibility="Auto"
+                                 Background="White" Foreground="Black" BorderThickness="0"
+                                 Padding="56,48"
+                                 PreviewKeyDown="Editor_PreviewKeyDown"
+                                 SelectionChanged="Editor_SelectionChanged" TextChanged="Editor_TextChanged"
+                                 SpellCheck.IsEnabled="True" Language="fr-FR"/>
+                    <local:FormattingMarksOverlay x:Name="MarksOverlay" Visibility="Collapsed"/>
+                </Grid>
             </Border>
         </Grid>
     </DockPanel>

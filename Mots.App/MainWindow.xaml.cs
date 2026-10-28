@@ -34,6 +34,7 @@ public partial class MainWindow : Window
                 e.FormatToApply = DataFormats.UnicodeText;
         });
 
+        MarksOverlay.Target = Editor;
         InitializeOutline();
         UpdateStyleBox();
         SetDirty(false); // l'application des styles au document initial a déclenché TextChanged
@@ -192,6 +193,14 @@ public partial class MainWindow : Window
 
     private void ShowError(string message, Exception ex) =>
         DialogWindow.Show(this, message, ex.Message, ["OK"], defaultIndex: 0, cancelIndex: 0);
+
+    // ---------- Affichage ----------
+
+    private void Marks_Changed(object sender, RoutedEventArgs e) =>
+        MarksOverlay.Visibility = MarksButton.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+
+    private void ToggleMarks_Executed(object sender, ExecutedRoutedEventArgs e) =>
+        MarksButton.IsChecked = MarksButton.IsChecked != true;
 
     // ---------- Mise en forme ----------
 
@@ -405,6 +414,11 @@ public partial class MainWindow : Window
 public static class FileCommands
 {
     public static readonly RoutedCommand Import = new(nameof(Import), typeof(FileCommands));
+}
+
+public static class ViewCommands
+{
+    public static readonly RoutedCommand ToggleMarks = new(nameof(ToggleMarks), typeof(ViewCommands));
 }
 
 public static class StyleCommands
