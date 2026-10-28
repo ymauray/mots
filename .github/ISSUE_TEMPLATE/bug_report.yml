@@ -1,0 +1,47 @@
+name: Rapport de bug
+description: Signaler un dysfonctionnement ou une régression
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Merci de vérifier qu'un rapport similaire n'est pas déjà ouvert.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Version de Mots (tag de la release) ou commit utilisé.
+    validations:
+      required: true
+  - type: input
+    id: environnement
+    attributes:
+      label: Environnement
+      description: Version de Windows, thème clair ou sombre, taille d'écran et mise à l'échelle.
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description du problème
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Étapes de reproduction
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: attendu
+    attributes:
+      label: Comportement attendu
+    validations:
+      required: true
+  - type: textarea
+    id: contexte
+    attributes:
+      label: Informations complémentaires
+      description: Captures d'écran, document qui pose problème (sans contenu confidentiel)...
