@@ -19,7 +19,7 @@ public static class ParagraphStyles
 
     private static readonly FontFamily Family = new(FontName);
 
-    /// <param name="WordId">Identifiant du style dans le .docx (« Heading1 » est celui de Word pour Titre 1).</param>
+    /// <param name="WordId">Identifiant du style dans le .docx (celui que Word en français donne à « Titre 1 »).</param>
     /// <param name="WordName">Nom interne du style (Word l'affiche localisé : « Titre 1 »).</param>
     /// <param name="LineSpacing">Multiple de l'interligne simple (1,5 = « 1,5 ligne »).</param>
     /// <param name="NextKind">Style du paragraphe créé par « Entrée » en fin de paragraphe.</param>
@@ -37,7 +37,7 @@ public static class ParagraphStyles
         PageBreakBefore: false, OutlineLevel: null, StyleKind.Normal, IsCustom: false);
 
     public static Definition Heading1 { get; } = new(
-        StyleKind.Heading1, "Heading1", "heading 1", "Titre 1",
+        StyleKind.Heading1, "Titre1", "heading 1", "Titre 1",
         FontSizePt: 18, Bold: true, TextAlignment.Left, FirstLineIndentCm: 0.5,
         SpaceBeforePt: 24, SpaceAfterPt: 12, LineSpacing: 1.5,
         PageBreakBefore: true, OutlineLevel: 0, StyleKind.Normal, IsCustom: false);
