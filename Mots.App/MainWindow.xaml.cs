@@ -35,7 +35,7 @@ public partial class MainWindow : Window
 
         InitializeOutline();
         UpdateStyleBox();
-        UpdateTitle();
+        SetDirty(false); // l'application des styles au document initial a déclenché TextChanged
         UpdateStatus();
     }
 
