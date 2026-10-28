@@ -16,10 +16,14 @@ internal sealed class WindowHarness : IDisposable
 {
     private const BindingFlags Private = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
 
-    public MainWindow Window { get; } = new();
+    public RecentFiles Recent { get; }
 
-    public WindowHarness(bool show = false)
+    public MainWindow Window { get; }
+
+    public WindowHarness(string recentStoragePath, bool show = false)
     {
+        Recent = new RecentFiles(recentStoragePath);
+        Window = new MainWindow(Recent);
         if (!show) return;
         Window.Left = -20000; // hors de l'écran : certains tests ont besoin d'une source de présentation
         Window.Top = 0;
@@ -136,7 +140,7 @@ public abstract class WindowTestBase : FileTestBase
     internal WindowHarness H { get; private set; } = null!;
 
     [SetUp]
-    public void CreateWindow() => H = new WindowHarness();
+    public void CreateWindow() => H = new WindowHarness(PathOf("recent.json"));
 
     [TearDown]
     public void DisposeWindow() => H.Dispose();
@@ -148,7 +152,7 @@ public abstract class ShownWindowTestBase : FileTestBase
     internal WindowHarness H { get; private set; } = null!;
 
     [SetUp]
-    public void CreateWindow() => H = new WindowHarness(show: true);
+    public void CreateWindow() => H = new WindowHarness(PathOf("recent.json"), show: true);
 
     [TearDown]
     public void DisposeWindow() => H.Dispose();

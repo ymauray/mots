@@ -81,6 +81,8 @@
                         ToolTip="Nouveau (Ctrl+N)"/>
                 <Button Style="{StaticResource IconButton}" Content="&#xE8E5;" Command="ApplicationCommands.Open"
                         ToolTip="Ouvrir (Ctrl+O)"/>
+                <Button x:Name="RecentButton" Style="{StaticResource IconButton}" Content="&#xE70D;" FontSize="10"
+                        Width="20" Margin="0,0,1,0" Click="Recent_Click" ToolTip="Documents récents"/>
                 <Button Style="{StaticResource IconButton}" Content="&#xE8B5;"
                         Command="{x:Static local:FileCommands.Import}"
                         ToolTip="Importer un document Word (Ctrl+Maj+O)"/>

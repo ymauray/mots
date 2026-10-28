@@ -17,8 +17,15 @@ public partial class MainWindow : Window
     private bool _dirty;
     private bool _updatingToolbar;
 
-    public MainWindow()
+    private readonly RecentFiles _recent;
+
+    public MainWindow() : this(RecentFiles.CreateDefault())
     {
+    }
+
+    internal MainWindow(RecentFiles recent)
+    {
+        _recent = recent;
         InitializeComponent();
 
         StyleBox.ItemsSource = ParagraphStyles.All;
@@ -82,16 +89,25 @@ public partial class MainWindow : Window
         var dlg = new OpenFileDialog { Filter = FileFilter };
         if (dlg.ShowDialog(this) != true) return;
 
+        OpenPath(dlg.FileName);
+    }
+
+    private void OpenPath(string path)
+    {
         try
         {
-            ReplaceDocument(DocxConverter.Load(dlg.FileName));
-            _currentPath = dlg.FileName;
+            ReplaceDocument(DocxConverter.Load(path));
+            _currentPath = path;
             _importedName = null;
             SetDirty(false);
+            _recent.Add(path);
         }
         catch (Exception ex)
         {
             ShowError("Impossible d'ouvrir le fichier", ex);
+            // Un fichier déplacé ou supprimé n'a plus sa place dans la liste.
+            if (ex is FileNotFoundException or DirectoryNotFoundException)
+                _recent.Remove(path);
         }
     }
 
@@ -144,6 +160,7 @@ public partial class MainWindow : Window
             DocxConverter.Save(Editor.Document, path);
             _currentPath = path;
             SetDirty(false);
+            _recent.Add(path);
             return true;
         }
         catch (Exception ex)
