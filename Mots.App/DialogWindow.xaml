@@ -1,7 +1,7 @@
 <Window x:Class="Mots.DialogWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Mots" Width="440" SizeToContent="Height"
+        Title="Mots" Width="640" SizeToContent="Height"
         ResizeMode="NoResize" ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner" WindowStyle="SingleBorderWindow">
     <DockPanel>
