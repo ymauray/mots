@@ -239,11 +239,11 @@ public static class DocxConverter
         using var package = OpenPackage(stream);
 
         var main = package.MainDocumentPart
-                   ?? throw new InvalidDataException("Ce fichier n'est pas un document Word valide.");
+                   ?? throw new IncompatibleFileException("Ce fichier n'est pas un document Word valide.");
         if (requireMarker)
             MotsMetadata.Verify(main);
         var body = main.Document?.Body
-                   ?? throw new InvalidDataException("Ce fichier n'est pas un document Word valide.");
+                   ?? throw new IncompatibleFileException("Ce fichier n'est pas un document Word valide.");
 
         var reader = new Reader(main);
         var document = new FlowDocument();
