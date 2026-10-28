@@ -16,7 +16,7 @@ public sealed class IncompatibleFileException(string message) : Exception(messag
 internal static class MotsMetadata
 {
     /// <summary>À incrémenter quand le contenu des fichiers change de façon incompatible avec les versions précédentes.</summary>
-    public const int CurrentFormatVersion = 1;
+    public const int CurrentFormatVersion = 2;
 
     private static readonly XNamespace Ns = "urn:mots:metadata";
 

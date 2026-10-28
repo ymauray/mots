@@ -4,7 +4,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
 using Microsoft.Win32;
 
 namespace Mots;
@@ -21,12 +20,43 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        FontFamilyBox.ItemsSource = Fonts.SystemFontFamilies.OrderBy(f => f.Source).ToList();
-        // Tailles en points (comme Word) ; WPF travaille en pixels, soit pt × 4/3.
-        FontSizeBox.ItemsSource = new double[] { 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48, 72 };
+        StyleBox.ItemsSource = ParagraphStyles.All;
+        foreach (var paragraph in Editor.Document.Blocks.OfType<Paragraph>())
+            ParagraphStyles.Apply(paragraph, StyleKind.Normal);
 
+        DisableLayoutCommands();
+
+        // Le texte collé perd sa mise en forme d'origine : seuls les styles de Mots font foi.
+        DataObject.AddPastingHandler(Editor, (_, e) =>
+        {
+            if (e.DataObject.GetDataPresent(DataFormats.UnicodeText))
+                e.FormatToApply = DataFormats.UnicodeText;
+        });
+
+        UpdateStyleBox();
         UpdateTitle();
         UpdateStatus();
+    }
+
+    /// <summary>
+    /// La mise en page vient des styles : on neutralise les commandes (et donc les raccourcis clavier) de
+    /// l'éditeur qui la modifieraient paragraphe par paragraphe.
+    /// </summary>
+    private void DisableLayoutCommands()
+    {
+        RoutedCommand[] commands =
+        [
+            EditingCommands.AlignLeft, EditingCommands.AlignCenter, EditingCommands.AlignRight, EditingCommands.AlignJustify,
+            EditingCommands.ToggleBullets, EditingCommands.ToggleNumbering,
+            EditingCommands.IncreaseIndentation, EditingCommands.DecreaseIndentation,
+            EditingCommands.IncreaseFontSize, EditingCommands.DecreaseFontSize,
+        ];
+        foreach (var command in commands)
+            Editor.CommandBindings.Add(new CommandBinding(command, (_, _) => { }, (_, e) =>
+            {
+                e.CanExecute = false;
+                e.Handled = true;
+            }));
     }
 
     // ---------- Fichier ----------
@@ -34,7 +64,9 @@ public partial class MainWindow : Window
     private void New_Executed(object sender, ExecutedRoutedEventArgs e)
     {
         if (!ConfirmDiscard()) return;
-        Editor.Document = new FlowDocument(new Paragraph()) { TextAlignment = TextAlignment.Left };
+        var paragraph = new Paragraph();
+        ParagraphStyles.Apply(paragraph, StyleKind.Normal);
+        Editor.Document = new FlowDocument(paragraph);
         _currentPath = null;
         SetDirty(false);
     }
@@ -90,7 +122,6 @@ public partial class MainWindow : Window
         }
     }
 
-
     private void Print_Executed(object sender, ExecutedRoutedEventArgs e)
     {
         var dlg = new PrintDialog();
@@ -136,18 +167,81 @@ public partial class MainWindow : Window
 
     // ---------- Mise en forme ----------
 
-    private void FontFamily_Changed(object sender, SelectionChangedEventArgs e)
+    private void Style_Changed(object sender, SelectionChangedEventArgs e)
     {
-        if (_updatingToolbar || FontFamilyBox.SelectedItem is not FontFamily family) return;
-        Editor.Selection.ApplyPropertyValue(TextElement.FontFamilyProperty, family);
+        if (_updatingToolbar || StyleBox.SelectedValue is not StyleKind kind) return;
+        ApplyStyle(kind);
+    }
+
+    private void StyleNormal_Executed(object sender, ExecutedRoutedEventArgs e) => ApplyStyle(StyleKind.Normal);
+
+    private void StyleHeading1_Executed(object sender, ExecutedRoutedEventArgs e) => ApplyStyle(StyleKind.Heading1);
+
+    private void ApplyStyle(StyleKind kind)
+    {
+        Editor.BeginChange();
+        try
+        {
+            foreach (var paragraph in SelectedParagraphs())
+                ParagraphStyles.Apply(paragraph, kind);
+        }
+        finally
+        {
+            Editor.EndChange();
+        }
+        SetDirty(true);
+        UpdateStyleBox();
         Editor.Focus();
     }
 
-    private void FontSize_Changed(object sender, SelectionChangedEventArgs e)
+    private List<Paragraph> SelectedParagraphs()
     {
-        if (_updatingToolbar || FontSizeBox.SelectedItem is not double points) return;
-        Editor.Selection.ApplyPropertyValue(TextElement.FontSizeProperty, points * 4 / 3);
-        Editor.Focus();
+        var paragraphs = new List<Paragraph>();
+        void Add(Paragraph? p)
+        {
+            if (p is not null && (paragraphs.Count == 0 || paragraphs[^1] != p))
+                paragraphs.Add(p);
+        }
+
+        var end = Editor.Selection.End;
+        for (var pos = Editor.Selection.Start; pos is not null && pos.CompareTo(end) <= 0;
+             pos = pos.GetNextContextPosition(LogicalDirection.Forward))
+            Add(pos.Paragraph);
+        Add(end.Paragraph);
+        return paragraphs;
+    }
+
+    private void UpdateStyleBox()
+    {
+        var kind = Editor.Selection.Start.Paragraph is { } p ? ParagraphStyles.KindOf(p) : StyleKind.Normal;
+        var wasUpdating = _updatingToolbar;
+        _updatingToolbar = true;
+        StyleBox.SelectedValue = kind;
+        _updatingToolbar = wasUpdating;
+    }
+
+    /// <summary>Après un titre, « Entrée » en fin de paragraphe démarre un paragraphe « Normal » (style suivant).</summary>
+    private void Editor_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || Keyboard.Modifiers != ModifierKeys.None || !Editor.Selection.IsEmpty) return;
+
+        var caret = Editor.CaretPosition;
+        if (caret.Paragraph is not { } current || ParagraphStyles.KindOf(current) != StyleKind.Heading1) return;
+        if (new TextRange(caret, current.ContentEnd).Text.Length > 0) return;
+
+        e.Handled = true;
+        Editor.BeginChange(); // un seul pas d'annulation pour le saut de paragraphe et le changement de style
+        try
+        {
+            EditingCommands.EnterParagraphBreak.Execute(null, Editor);
+            if (Editor.CaretPosition.Paragraph is { } next && next != current)
+                ParagraphStyles.Apply(next, StyleKind.Normal);
+        }
+        finally
+        {
+            Editor.EndChange();
+        }
+        UpdateStyleBox();
     }
 
     private void Editor_SelectionChanged(object sender, RoutedEventArgs e)
@@ -155,24 +249,13 @@ public partial class MainWindow : Window
         _updatingToolbar = true;
         try
         {
-            var family = Editor.Selection.GetPropertyValue(TextElement.FontFamilyProperty);
-            FontFamilyBox.SelectedItem = family is FontFamily f
-                ? FontFamilyBox.Items.Cast<FontFamily>().FirstOrDefault(x => x.Source == f.Source)
-                : null;
-
-            var size = Editor.Selection.GetPropertyValue(TextElement.FontSizeProperty);
-            FontSizeBox.SelectedItem = size is double px ? Math.Round(px * 0.75, 1) : null;
+            UpdateStyleBox();
 
             BoldButton.IsChecked = Equals(Editor.Selection.GetPropertyValue(TextElement.FontWeightProperty), FontWeights.Bold);
             ItalicButton.IsChecked = Equals(Editor.Selection.GetPropertyValue(TextElement.FontStyleProperty), FontStyles.Italic);
             UnderlineButton.IsChecked = Editor.Selection.GetPropertyValue(Inline.TextDecorationsProperty)
                 is TextDecorationCollection decorations
                 && decorations.Any(d => d.Location == TextDecorationLocation.Underline);
-
-            var align = Editor.Selection.GetPropertyValue(Block.TextAlignmentProperty);
-            AlignLeftButton.IsChecked = Equals(align, TextAlignment.Left);
-            AlignCenterButton.IsChecked = Equals(align, TextAlignment.Center);
-            AlignRightButton.IsChecked = Equals(align, TextAlignment.Right);
         }
         finally
         {
@@ -283,4 +366,10 @@ public partial class MainWindow : Window
         var chars = text.TrimEnd('\r', '\n').Length;
         StatusText.Text = $"{words} mot(s) · {chars} caractère(s)";
     }
+}
+
+public static class StyleCommands
+{
+    public static readonly RoutedCommand Normal = new(nameof(Normal), typeof(StyleCommands));
+    public static readonly RoutedCommand Heading1 = new(nameof(Heading1), typeof(StyleCommands));
 }
