@@ -1,0 +1,16 @@
+# Détection automatique du texte ; LF dans le dépôt
+* text=auto
+
+# Fichiers du projet : CRLF dans le répertoire de travail (Windows / Visual Studio)
+*.cs text eol=crlf
+*.xaml text eol=crlf
+*.csproj text eol=crlf
+*.slnx text eol=crlf
+*.md text eol=crlf
+*.gitignore text eol=crlf
+*.gitattributes text eol=crlf
+
+# Binaires
+*.docx binary
+*.png binary
+*.ico binary
