@@ -6,6 +6,8 @@
 
 Mots est un petit traitement de textes pour Windows, pensé pour écrire des romans. Tout y est piloté par les **styles** : pas de police, de taille, d'alignement ni de liste à régler à la main, seulement le style du paragraphe. Les documents sont de vrais fichiers Word (`.docx`).
 
+Site : <https://ymauray.github.io/mots/>
+
 ## Fonctionnalités
 
 - Trois styles de paragraphe : **Normal**, **Titre 1** (un chapitre par page) et **Ellipse** (séparateur de scène).
