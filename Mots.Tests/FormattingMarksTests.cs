@@ -128,7 +128,7 @@ public class FormattingMarksTests : ShownWindowTestBase
     [Test]
     public void Each_paragraph_gets_its_own_mark()
     {
-        H.LoadParagraphs(Docs.P(StyleKind.Normal, "a"), Docs.P(StyleKind.Heading1, "b"), Docs.P(StyleKind.Normal));
+        H.LoadParagraphs(Docs.P(StyleKind.Heading1, "b"), Docs.P(StyleKind.Normal, "a"), Docs.P(StyleKind.Normal));
 
         Assert.That(Glyphs().Count(g => g == "¶"), Is.EqualTo(3));
     }
@@ -136,13 +136,13 @@ public class FormattingMarksTests : ShownWindowTestBase
     [Test]
     public void Marks_follow_the_paragraph_font_size()
     {
-        H.LoadParagraphs(Docs.P(StyleKind.Normal, "a"), Docs.P(StyleKind.Heading1, "b"));
+        H.LoadParagraphs(Docs.P(StyleKind.Heading1, "b"), Docs.P(StyleKind.Normal, "a"));
 
         var sizes = Render().Where(m => m.Glyph == "¶").Select(m => m.Size).ToList();
         Assert.Multiple(() =>
         {
             Assert.That(sizes, Has.Count.EqualTo(2));
-            Assert.That(sizes[1] / sizes[0], Is.EqualTo(24.0 / 16).Within(0.02));
+            Assert.That(sizes[0] / sizes[1], Is.EqualTo(24.0 / 16).Within(0.02));
         });
     }
 

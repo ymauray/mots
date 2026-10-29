@@ -50,9 +50,21 @@ internal sealed class WindowHarness : IDisposable
     public System.Windows.Controls.Primitives.ToggleButton MarksButton => Element<System.Windows.Controls.Primitives.ToggleButton>("MarksButton");
     public FrameworkElement MarksOverlay => Element<FrameworkElement>("MarksOverlay");
 
-    public List<Paragraph> Paragraphs => Editor.Document.Blocks.OfType<Paragraph>().ToList();
+    /// <summary>Tous les paragraphes du manuscrit, tous chapitres confondus (l'éditeur n'en affiche qu'une partie).</summary>
+    public List<Paragraph> Paragraphs => ((IEnumerable<Paragraph>)GetProperty("AllParagraphs")).ToList();
 
     public List<StyleKind> Kinds => Paragraphs.Select(ParagraphStyles.KindOf).ToList();
+
+    /// <summary>Paragraphes de la fenêtre de l'éditeur (le chapitre du curseur et ses voisins).</summary>
+    public List<Paragraph> ShownParagraphs => Editor.Document.Blocks.OfType<Paragraph>().ToList();
+
+    public int ChapterCount => (int)GetProperty("ChapterCount")!;
+
+    /// <summary>Indice du chapitre qui contient le curseur.</summary>
+    public int CurrentChapter => (int)Invoke("CaretChapterIndex")!;
+
+    /// <summary>Place le chapitre du paragraphe au centre de la fenêtre de l'éditeur.</summary>
+    public void Show(Paragraph paragraph) => Invoke("OpenChapter", Invoke("ChapterIndexOf", paragraph));
 
     public object? Invoke(string method, params object?[] args)
     {
@@ -68,6 +80,9 @@ internal sealed class WindowHarness : IDisposable
             throw;
         }
     }
+
+    public object? GetProperty(string name) =>
+        (typeof(MainWindow).GetProperty(name, Private) ?? throw new MissingMemberException(nameof(MainWindow), name)).GetValue(Window);
 
     public T Field<T>(string name) =>
         (T)(typeof(MainWindow).GetField(name, Private) ?? throw new MissingFieldException(nameof(MainWindow), name)).GetValue(Window)!;
@@ -93,16 +108,23 @@ internal sealed class WindowHarness : IDisposable
     public void Select(int paragraphIndex, int start, int length)
     {
         var paragraph = Paragraphs[paragraphIndex];
+        Show(paragraph);
         var from = paragraph.ContentStart.GetPositionAtOffset(start + 1) ?? paragraph.ContentStart; // +1 : ouverture du Run
         var to = from.GetPositionAtOffset(length) ?? from;
         Editor.Selection.Select(from, to);
     }
 
-    public void PlaceCaretAtEnd(int paragraphIndex) =>
+    public void PlaceCaretAtEnd(int paragraphIndex)
+    {
+        Show(Paragraphs[paragraphIndex]);
         Editor.CaretPosition = Paragraphs[paragraphIndex].ContentEnd;
+    }
 
-    public void PlaceCaretAtStart(int paragraphIndex) =>
+    public void PlaceCaretAtStart(int paragraphIndex)
+    {
+        Show(Paragraphs[paragraphIndex]);
         Editor.CaretPosition = Paragraphs[paragraphIndex].ContentStart;
+    }
 
     /// <summary>Simule une touche dans l'éditeur (la fenêtre doit avoir été affichée).</summary>
     public bool PressKey(Key key)

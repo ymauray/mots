@@ -57,6 +57,8 @@
         <KeyBinding Key="Space" Modifiers="Ctrl+Alt+Shift" Command="{x:Static local:TypographyCommands.NarrowNonBreakingSpace}"/>
         <KeyBinding Key="D0" Modifiers="Ctrl" Command="{x:Static local:StyleCommands.Normal}"/>
         <KeyBinding Key="D1" Modifiers="Ctrl" Command="{x:Static local:StyleCommands.Heading1}"/>
+        <KeyBinding Key="PageDown" Modifiers="Ctrl" Command="{x:Static local:ChapterCommands.Next}"/>
+        <KeyBinding Key="PageUp" Modifiers="Ctrl" Command="{x:Static local:ChapterCommands.Previous}"/>
     </Window.InputBindings>
 
     <Window.CommandBindings>
@@ -74,6 +76,8 @@
         <CommandBinding Command="{x:Static local:TypographyCommands.NarrowNonBreakingSpace}" Executed="NarrowNonBreakingSpace_Executed"/>
         <CommandBinding Command="{x:Static local:StyleCommands.Normal}" Executed="StyleNormal_Executed"/>
         <CommandBinding Command="{x:Static local:StyleCommands.Heading1}" Executed="StyleHeading1_Executed"/>
+        <CommandBinding Command="{x:Static local:ChapterCommands.Next}" Executed="NextChapter_Executed"/>
+        <CommandBinding Command="{x:Static local:ChapterCommands.Previous}" Executed="PreviousChapter_Executed"/>
     </Window.CommandBindings>
 
     <DockPanel>
@@ -205,7 +209,7 @@
                                  Padding="56,48"
                                  PreviewKeyDown="Editor_PreviewKeyDown" PreviewTextInput="Editor_PreviewTextInput"
                                  SelectionChanged="Editor_SelectionChanged" TextChanged="Editor_TextChanged"
-                                 SpellCheck.IsEnabled="True" Language="fr-FR"/>
+                                 SpellCheck.IsEnabled="False" Language="fr-FR"/>
                     <local:FormattingMarksOverlay x:Name="MarksOverlay" Visibility="Collapsed"/>
                 </Grid>
             </Border>

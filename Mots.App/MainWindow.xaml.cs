@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Threading;
 using Microsoft.Win32;
 
 namespace Mots;
@@ -18,6 +19,7 @@ public partial class MainWindow : Window
     private bool _updatingToolbar;
 
     private readonly RecentFiles _recent;
+    private readonly DispatcherTimer _statusTimer = new() { Interval = TimeSpan.FromMilliseconds(250) };
 
     public MainWindow() : this(RecentFiles.CreateDefault())
     {
@@ -42,6 +44,8 @@ public partial class MainWindow : Window
         });
 
         MarksOverlay.Target = Editor;
+        Editor.AddHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler((_, _) => FollowCaret())); // un chapitre en trop peut être retiré une fois sorti de la vue
+        _statusTimer.Tick += (_, _) => UpdateStatus();
         InitializeOutline();
         UpdateStyleBox();
         SetDirty(false); // l'application des styles au document initial a déclenché TextChanged
@@ -157,7 +161,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            DocxConverter.Save(Editor.Document, path);
+            DocxConverter.Save(AllParagraphs, path);
             _currentPath = path;
             SetDirty(false);
             _recent.Add(path);
@@ -175,13 +179,22 @@ public partial class MainWindow : Window
         var dlg = new PrintDialog();
         if (dlg.ShowDialog() != true) return;
 
-        // Copie du document pour paginer selon la taille de la page imprimée.
-        var range = new TextRange(Editor.Document.ContentStart, Editor.Document.ContentEnd);
-        using var ms = new MemoryStream();
-        range.Save(ms, DataFormats.Xaml);
-        ms.Position = 0;
+        // Copie du document entier pour paginer selon la taille de la page imprimée.
         var copy = new FlowDocument();
-        new TextRange(copy.ContentStart, copy.ContentEnd).Load(ms, DataFormats.Xaml);
+        foreach (var chapter in AllDocuments)
+        {
+            var range = new TextRange(chapter.ContentStart, chapter.ContentEnd);
+            using var ms = new MemoryStream();
+            range.Save(ms, DataFormats.Xaml);
+            ms.Position = 0;
+            var part = new FlowDocument();
+            new TextRange(part.ContentStart, part.ContentEnd).Load(ms, DataFormats.Xaml);
+            foreach (var block in part.Blocks.ToList())
+            {
+                part.Blocks.Remove(block);
+                copy.Blocks.Add(block);
+            }
+        }
         copy.PageWidth = dlg.PrintableAreaWidth;
         copy.PageHeight = dlg.PrintableAreaHeight;
         copy.PagePadding = new Thickness(50);
@@ -245,6 +258,8 @@ public partial class MainWindow : Window
             Editor.EndChange();
         }
         SetDirty(true);
+        NormalizeWindow();
+        FollowCaret();
         UpdateStyleBox();
         ScheduleOutlineRefresh();
         Editor.Focus();
@@ -304,6 +319,7 @@ public partial class MainWindow : Window
 
     private void Editor_SelectionChanged(object sender, RoutedEventArgs e)
     {
+        FollowCaret();
         _updatingToolbar = true;
         try
         {
@@ -324,8 +340,9 @@ public partial class MainWindow : Window
 
     private void Editor_TextChanged(object sender, TextChangedEventArgs e)
     {
+        if (IsSwitching) return;
         SetDirty(true);
-        UpdateStatus();
+        ScheduleStatusRefresh();
         ScheduleOutlineRefresh();
     }
 
@@ -354,18 +371,37 @@ public partial class MainWindow : Window
 
     private void FindNext_Click(object sender, RoutedEventArgs e) => FindNext();
 
+    /// <summary>Cherche à partir du curseur, puis dans les chapitres masqués après la fenêtre, avant elle, et enfin au début de la fenêtre.</summary>
     private void FindNext()
     {
-        if (FindBox.Text.Length == 0) return;
-        var found = FindFrom(Editor.Selection.End, FindBox.Text)
-                    ?? FindFrom(Editor.Document.ContentStart, FindBox.Text);
+        var text = FindBox.Text;
+        if (text.Length == 0) return;
+
+        var found = FindFrom(Editor.Selection.End, text);
+        foreach (var document in _after.Concat(_before).Append(Editor.Document))
+        {
+            if (found is not null) break;
+            found = FindFrom(document.ContentStart, text);
+        }
         if (found is null)
         {
-            StatusText.Text = "Aucun résultat.";
+            ShowStatusMessage("Aucun résultat.");
             return;
         }
+
+        var paragraph = found.Start.Paragraph!;
+        if (!ReferenceEquals(paragraph.Parent, Editor.Document)) // chapitre masqué : l'ouvrir déplace le texte, d'où le repérage par décalages
+        {
+            var offset = paragraph.ContentStart.GetOffsetToPosition(found.Start);
+            var length = found.Start.GetOffsetToPosition(found.End);
+            OpenChapter(ChapterIndexOf(paragraph));
+            var start = paragraph.ContentStart.GetPositionAtOffset(offset)!;
+            found = new TextRange(start, start.GetPositionAtOffset(length)!);
+        }
+
         Editor.Selection.Select(found.Start, found.End);
         Editor.Focus();
+        paragraph.BringIntoView();
     }
 
     private static TextRange? FindFrom(TextPointer start, string text)
@@ -398,14 +434,22 @@ public partial class MainWindow : Window
     {
         if (FindBox.Text.Length == 0) return;
         var count = 0;
-        var pos = Editor.Document.ContentStart;
-        while (FindFrom(pos, FindBox.Text) is { } range)
+        foreach (var chapter in AllDocuments.ToList())
         {
-            range.Text = ReplaceBox.Text;
-            pos = range.End;
-            count++;
+            var pos = chapter.ContentStart;
+            while (FindFrom(pos, FindBox.Text) is { } range)
+            {
+                range.Text = ReplaceBox.Text;
+                pos = range.End;
+                count++;
+            }
         }
-        StatusText.Text = $"{count} remplacement(s).";
+        if (count > 0) // seul le chapitre affiché signale ses modifications
+        {
+            SetDirty(true);
+            ScheduleOutlineRefresh();
+        }
+        ShowStatusMessage($"{count} remplacement(s).");
     }
 
     // ---------- Divers ----------
@@ -420,9 +464,24 @@ public partial class MainWindow : Window
 
     private void UpdateTitle() => Title = $"{(_dirty ? "*" : "")}{DisplayName} — Mots";
 
+    /// <summary>Recompte les mots peu après la dernière modification : parcourir tout le document à chaque frappe la ralentit.</summary>
+    private void ScheduleStatusRefresh()
+    {
+        _statusTimer.Stop();
+        _statusTimer.Start();
+    }
+
+    /// <summary>Affiche un message à la place des compteurs, que le recomptage différé ne doit pas écraser.</summary>
+    private void ShowStatusMessage(string message)
+    {
+        _statusTimer.Stop();
+        StatusText.Text = message;
+    }
+
     private void UpdateStatus()
     {
-        var text = new TextRange(Editor.Document.ContentStart, Editor.Document.ContentEnd).Text;
+        _statusTimer.Stop();
+        var text = string.Concat(AllDocuments.Select(c => new TextRange(c.ContentStart, c.ContentEnd).Text));
         var words = text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
         var chars = text.TrimEnd('\r', '\n').Length;
         StatusText.Text = $"{words} mot(s) · {chars} caractère(s)";

@@ -14,6 +14,7 @@ Pour une nouvelle fonctionnalité ou un changement important, ouvrez d'abord une
 ```sh
 dotnet build Mots.slnx
 dotnet test Mots.Tests
+dotnet run --project Mots.App -c Release   # en Debug, la frappe est nettement plus lente : juger la fluidité en Release
 ```
 
 Les tests créent de vraies fenêtres WPF (hors écran) et simulent des touches : évitez d'appuyer sur Maj ou Ctrl pendant leur exécution.

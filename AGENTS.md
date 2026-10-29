@@ -18,7 +18,8 @@ Pas de linter. Si `Mots.exe` tourne en Debug, il verrouille la compilation : lan
   - `ParagraphStyles.cs` : source unique des styles, pour l'éditeur (WPF) comme pour le `.docx`.
   - `DocxConverter.cs` : `Save`, `Load` (marqueur Mots exigé) et `Import` (document Word quelconque ; les styles inconnus sont rejetés avec un message explicite).
   - `MotsMetadata.cs` : marqueur de compatibilité (partie Custom XML `urn:mots:metadata`, `formatVersion`).
-  - `MainWindow*.cs` / `MainWindow.xaml` : fenêtre principale en classe partielle (plan, zoom, typographie, récents).
+  - `MainWindow*.cs` / `MainWindow.xaml` : fenêtre principale en classe partielle (chapitres, plan, zoom, typographie, récents).
+  - `MainWindow.Chapters.cs` : le manuscrit est découpé en chapitres (un « Titre 1 » et son texte). `Editor.Document` n'est qu'une **fenêtre** sur le chapitre du curseur et ses voisins ; les autres chapitres sont à l'écart (`_before`, `_after`). Pour tout le manuscrit, utiliser `AllDocuments` / `AllParagraphs`, jamais `Editor.Document`.
   - `FormattingMarksOverlay.cs` : dessin des caractères non imprimables ; `RecentFiles.cs` : documents récents.
 - `Mots.Tests/` : tests NUnit, exécutés en STA (WPF). `WindowHarness` pilote la vraie fenêtre par réflexion.
 
@@ -35,6 +36,8 @@ Pas de linter. Si `Mots.exe` tourne en Debug, il verrouille la compilation : lan
 
 ## Pièges
 
+- WPF met en page tout le document de l'éditeur à chaque frappe : ne jamais y remettre le manuscrit entier, ni ajouter de travail proportionnel à sa taille dans un gestionnaire de frappe (le recomptage et le plan sont différés de 250 ms). Juger la fluidité en Release (`dotnet run -c Release`), pas en Debug.
+- Déplacer des blocs dans la fenêtre de l'éditeur déclenche `TextChanged` : passer par `WhileSwitching` pour ne pas marquer le document modifié. Le correcteur orthographique de WPF est volontairement désactivé (coût à la frappe).
 - Les objets WPF exigent un thread STA : les tests le déclarent au niveau de l'assembly.
 - Les tests de clavier lisent l'état réel de Maj et Ctrl : ne pas les presser pendant l'exécution.
 - Un projet qui référence `Mots.App` doit être autonome win-x64 (`SelfContained`, sinon erreur NETSDK1151).

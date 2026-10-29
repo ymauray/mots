@@ -18,7 +18,10 @@ public static class DocxConverter
 {
     // ---------- Écriture ----------
 
-    public static void Save(FlowDocument document, string path)
+    public static void Save(FlowDocument document, string path) =>
+        Save(document.Blocks.OfType<Paragraph>(), path);
+
+    public static void Save(IEnumerable<Paragraph> paragraphs, string path)
     {
         // Écriture en mémoire d'abord : un échec ne laisse pas un fichier à moitié écrit.
         using var ms = new MemoryStream();
@@ -28,7 +31,7 @@ public static class DocxConverter
             var body = new W.Body();
             main.Document = new W.Document(body);
 
-            foreach (var paragraph in document.Blocks.OfType<Paragraph>())
+            foreach (var paragraph in paragraphs)
                 body.Append(ToWordParagraph(paragraph));
 
             body.Append(new W.SectionProperties(
