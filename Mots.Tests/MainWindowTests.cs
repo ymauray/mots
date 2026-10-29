@@ -72,11 +72,11 @@ public class MainWindowStartupTests : WindowTestBase
     }
 
     [Test]
-    public void Spell_check_is_on_in_french()
+    public void Spell_check_is_off_and_language_is_french()
     {
         Assert.Multiple(() =>
         {
-            Assert.That(H.Editor.SpellCheck.IsEnabled, Is.True);
+            Assert.That(H.Editor.SpellCheck.IsEnabled, Is.False); // coûteux à la frappe ; la correction se fait dans Antidote
             Assert.That(H.Editor.Language.IetfLanguageTag, Is.EqualTo("fr-FR").IgnoreCase);
         });
     }
@@ -97,11 +97,29 @@ public class MainWindowEditingTests : WindowTestBase
     }
 
     [Test]
-    public void Typing_updates_the_word_and_character_counts()
+    public void Typing_updates_the_word_and_character_counts_after_a_delay()
     {
+        var timer = H.Field<System.Windows.Threading.DispatcherTimer>("_statusTimer");
+
         H.Editor.CaretPosition.InsertTextInRun("Un deux  trois");
 
-        Assert.That(H.StatusText.Text, Is.EqualTo("3 mot(s) · 14 caractère(s)"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(H.StatusText.Text, Is.EqualTo("0 mot(s) · 0 caractère(s)"), "pas de recomptage à la frappe");
+            Assert.That(timer.IsEnabled, Is.True);
+        });
+
+        timer.Interval = TimeSpan.FromMilliseconds(1);
+        timer.Stop();
+        timer.Start();
+        System.Threading.Thread.Sleep(20);
+        Wpf.Pump();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(H.StatusText.Text, Is.EqualTo("3 mot(s) · 14 caractère(s)"));
+            Assert.That(timer.IsEnabled, Is.False);
+        });
     }
 
     [Test]
